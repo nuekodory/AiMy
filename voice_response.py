@@ -1,22 +1,30 @@
 import sys
 import subprocess
+import threading
 import time
 import socket
 import tempfile
 from pathlib import Path
 
 
+def exec_async(cmd: list):
+    subprocess.run(cmd)
+
+
 def speak_word(arg: str):
+    # write down text to speech
     with tempfile.NamedTemporaryFile(mode='w+t', delete=False) as tf:
         tf_path = tf.name
         tf.write(arg)
 
+    # text-to-speech.
     with tempfile.NamedTemporaryFile(mode='w+t', delete=False, suffix=".wav") as sf:
         sf_path = sf.name
         command = ["open_jtalk", "-m", htsvoice_path, "-x", mecab_dict_path, "-ow", sf_path, tf_path]
         subprocess.run(command)
         command = [sound_player, sf_path]
-        subprocess.run(command)
+        thread = threading.Thread(target=exec_async, args=command)
+        thread.start()
 
 
 def search_word(arg: str):
