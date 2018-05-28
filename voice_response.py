@@ -7,9 +7,13 @@ import tempfile
 from pathlib import Path
 
 
+def analyze_sequence(arg: str):
+    pass
+
+
 def exec_async(cmd1: str, cmd2: str):
     subprocess.run((cmd1, cmd2))
-    time.sleep(0.8)
+    time.sleep(0.5)
     subprocess.run((cmd1, cmd2))
 
 
@@ -78,12 +82,21 @@ if __name__ == '__main__':
     this_socket.connect((host, port))
 
     std_arg = ""
+    sequence = ""
     while True:
         std_arg = str(this_socket.recv(1024).decode("utf-8"))
         arg_split = std_arg.split('\n')
         for line in arg_split:
+            start_index = line.find("<RECOGOUT>")
+            if start_index != -1:
+                sequence = ""
             index = line.find("WORD")
             if index != -1:
                 word = line[index + 6:line.find('"', index + 6)]
+                sequence += word
                 search_word(word)
+            end_index = line.find("</RECOGOUT>")
+            if end_index != -1:
+                analyze_sequence(sequence)
+
         time.sleep(0.1)
