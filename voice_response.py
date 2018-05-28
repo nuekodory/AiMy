@@ -4,11 +4,19 @@ import threading
 import time
 import socket
 import tempfile
+import MeCab
 from pathlib import Path
 
 
-def analyze_sequence(arg: str):
-    pass
+def analyze_sequence(arg: str) -> list:
+    result = mecab.parseToNode(arg)
+    words = []
+    while result:
+        proto = result.feature.split(",")[6]
+        if proto != "*":
+            words.append(proto)
+        result = result.next
+    return words
 
 
 def exec_async(cmd1: str, cmd2: str):
@@ -33,12 +41,14 @@ def speak_word(arg: str):
         thread.start()
 
 
-def search_word(arg: str):
-    print(arg)
-    if arg in positives:
-        speak_word(word + "!")
-    elif arg in negatives:
-        speak_word(word + "?")
+def search_word(arg_list: list):
+    for arg in arg_list:
+        if arg in positives:
+            speak_word(arg + "!")
+            return
+        elif arg in negatives:
+            speak_word(arg + "?")
+            return
 
 
 def make_word_list(pos_file: Path, neg_file: Path) -> (list, list):
@@ -73,6 +83,7 @@ if __name__ == '__main__':
     neg_path = Path(args[3])
 
     positives, negatives = make_word_list(pos_path, neg_path)
+    mecab = MeCab.Tagger("-Ochasen")
 
     process = subprocess.Popen([launcher_path.absolute()], stdout=subprocess.PIPE,
                                cwd=launcher_path.parent)
@@ -94,9 +105,10 @@ if __name__ == '__main__':
             if index != -1:
                 word = line[index + 6:line.find('"', index + 6)]
                 sequence += word
-                search_word(word)
             end_index = line.find("</RECOGOUT>")
             if end_index != -1:
-                analyze_sequence(sequence)
+                print(sequence)
+                word_list = analyze_sequence(sequence)
+                search_word(word_list)
 
         time.sleep(0.1)
