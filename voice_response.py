@@ -7,8 +7,10 @@ import tempfile
 from pathlib import Path
 
 
-def exec_async(cmd: list):
-    subprocess.run(cmd)
+def exec_async(cmd1: str, cmd2: str):
+    subprocess.run((cmd1, cmd2))
+    time.sleep(0.8)
+    subprocess.run((cmd1, cmd2))
 
 
 def speak_word(arg: str):
@@ -22,7 +24,7 @@ def speak_word(arg: str):
         sf_path = sf.name
         command = ["open_jtalk", "-m", htsvoice_path, "-x", mecab_dict_path, "-ow", sf_path, tf_path]
         subprocess.run(command)
-        command = [sound_player, sf_path]
+        command = (sound_player, sf_path)
         thread = threading.Thread(target=exec_async, args=command)
         thread.start()
 
