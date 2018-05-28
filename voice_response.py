@@ -25,7 +25,15 @@ def exec_async(cmd1: str, cmd2: str):
     subprocess.run((cmd1, cmd2))
 
 
-def speak_word(arg: str):
+def speak_word(arg: str, mode: chr):
+
+    if mode == 'P':                         # switch htsvoice type by mode
+        htsvoice_path = htsvoice_happy
+    elif mode == 'N':
+        htsvoice_path = htsvoice_sad
+    else:
+        htsvoice_path = htsvoice_normal
+
     # write down text to speech
     with tempfile.NamedTemporaryFile(mode='w+t', delete=False) as tf:
         tf_path = tf.name
@@ -44,10 +52,10 @@ def speak_word(arg: str):
 def search_word(arg_list: list):
     for arg in arg_list:
         if arg in positives:
-            speak_word(arg + "!")
+            speak_word(arg, 'P')
             return
         elif arg in negatives:
-            speak_word(arg + "?")
+            speak_word(arg, 'N')
             return
 
 
@@ -67,7 +75,9 @@ def make_word_list(pos_file: Path, neg_file: Path) -> (list, list):
 
 host = "127.0.0.1"
 port = 10500
-htsvoice_path = "/usr/local/Cellar/open-jtalk/1.10_1/voice/mei/mei_normal.htsvoice"
+htsvoice_normal = "/usr/local/Cellar/open-jtalk/1.10_1/voice/mei/mei_normal.htsvoice"
+htsvoice_happy = "/usr/local/Cellar/open-jtalk/1.10_1/voice/mei/mei_happy.htsvoice"
+htsvoice_sad = "/usr/local/Cellar/open-jtalk/1.10_1/voice/mei/mei_sad.htsvoice"
 mecab_dict_path = "/usr/local/Cellar/open-jtalk/1.10_1/dic"
 sound_player = "afplay"
 
