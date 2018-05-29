@@ -19,10 +19,9 @@ def analyze_sequence(arg: str) -> list:
     return words
 
 
-def exec_async(cmd1: str, cmd2: str):
-    subprocess.run((cmd1, cmd2))
-    time.sleep(0.5)
-    subprocess.run((cmd1, cmd2))
+def exec_async(cmd: list):
+    subprocess.run(cmd)
+    subprocess.run(cmd)
 
 
 def speak_word(arg: str, mode: chr):
@@ -44,8 +43,8 @@ def speak_word(arg: str, mode: chr):
         sf_path = sf.name
         command = ["open_jtalk", "-m", htsvoice_path, "-x", mecab_dict_path, "-ow", sf_path, tf_path]
         subprocess.run(command)
-        command = (sound_player, sf_path)
-        thread = threading.Thread(target=exec_async, args=command)
+        command = [sound_player, sf_path]
+        thread = threading.Thread(target=exec_async, args=(command,))
         thread.start()
 
 
@@ -97,28 +96,33 @@ if __name__ == '__main__':
 
     process = subprocess.Popen([launcher_path.absolute()], stdout=subprocess.PIPE,
                                cwd=launcher_path.parent)
-    process_id = process.stdout.read()
-    time.sleep(5)
+    process_id = process.stdout.read().strip()
     this_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    this_socket.connect((host, port))
 
-    std_arg = ""
-    sequence = ""
-    while True:
-        std_arg = str(this_socket.recv(1024).decode("utf-8"))
-        arg_split = std_arg.split('\n')
-        for line in arg_split:
-            start_index = line.find("<RECOGOUT>")
-            if start_index != -1:
-                sequence = ""
-            index = line.find("WORD")
-            if index != -1:
-                word = line[index + 6:line.find('"', index + 6)]
-                sequence += word
-            end_index = line.find("</RECOGOUT>")
-            if end_index != -1:
-                print(sequence)
-                word_list = analyze_sequence(sequence)
-                search_word(word_list)
+    try:
+        this_socket.connect((host, port))
 
-        time.sleep(0.1)
+        std_arg = ""
+        sequence = ""
+        while True:
+            std_arg = str(this_socket.recv(1024).decode("utf-8"))
+            arg_split = std_arg.split('\n')
+            for line in arg_split:
+                start_index = line.find("<RECOGOUT>")
+                if start_index != -1:
+                    sequence = ""
+                index = line.find("WORD")
+                if index != -1:
+                    word = line[index + 6:line.find('"', index + 6)]
+                    sequence += word
+                end_index = line.find("</RECOGOUT>")
+                if end_index != -1:
+                    print(sequence)
+                    word_list = analyze_sequence(sequence)
+                    search_word(word_list)
+
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        process.kill()
+        subprocess.run(("kill", process_id))
+        this_socket.close()
